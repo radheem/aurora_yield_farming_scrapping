@@ -32,9 +32,12 @@ def get_data(contract):
     if page is None:
         return {"error":"no page"}
     else:
-        start = page.find(contract)
-        end = start+800
-        data = page[start:end].split("<br>")
+        data = []
+        while len(data)<2:
+            start = page.find(contract)
+            end = start+800
+            data = page[start:end].split("<br>")
+            time.sleep(1)
         return data[-2]
 
 def extract_info(data:str):
@@ -49,7 +52,7 @@ def extract_info(data:str):
     return {"day":p1,"week":p2,"year":p3}
 
 def updater(config):
-    global driver,page
+    global driver,page,apr
     init()
     data = get_data(config["contract_address"])
     apr = extract_info(data)
@@ -63,31 +66,31 @@ def updater(config):
         print(apr)
         time.sleep(config["refresh_time"])
 
-app.route("/apr/year",method=["GET"])
+@app.route("/apr/year",methods=["GET"])
 def get_year():
     global apr,state
     if state and "year" in apr:
-        return apr["year"]
+        return jsonify({"year":apr["year"]}),200
     else:
         jsonify({"error":"data not available"}),200
 
-app.route("/apr/day",method=["GET"])
+@app.route("/apr/day",methods=["GET"])
 def get_day():
     global apr
     if state and "day" in apr:
-        return apr["day"]
+        return jsonify({"day":apr["day"]}),200
     else:
         return jsonify({"error":"data not available"}),200
 
-app.route("/apr/week",method=["GET"])
+@app.route("/apr/week",methods=["GET"])
 def get_week():
     global apr
     if state and "week" in apr:
-        return apr["week"]
+        return jsonify({"week":apr["week"]}),200
     else:
         return jsonify({"error":"data not available"}),200
 
-app.route("/",method=["GET"])
+@app.route("/",methods=["GET"])
 def index():
     if state:
         return jsonify(apr),200
