@@ -14,6 +14,9 @@ app = Flask(__name__)
 state = False
 
 def init():
+    """
+    initializes the selenium driver and setsup metamask wallet
+    """
     global driver,page
     driver = launchSeleniumWebdriver("/usr/bin/chromedriver")
     metamaskSetup(metamask_recovery_phrase, metamask_password)
@@ -28,6 +31,13 @@ def init():
     return 
 
 def get_data(contract):
+    """
+    checks if the page is loaded if so then exctract the desired chunck of data from the page
+    Inputs:
+        - contract: the contract address of the token we want APR for
+    Returns:
+        - (str): html as text
+    """
     global driver,page
     if page is None:
         return {"error":"no page"}
@@ -41,6 +51,13 @@ def get_data(contract):
         return data[-2]
 
 def extract_info(data:str):
+    """
+        this function expects a string containing Day, Week and Year along with some value against each.
+        Inputs:
+            - data(str): a string of data
+        Returns:
+            - (dict): a dictionary containing the APRs
+    """
     print(data)
     c1 = data.find("Day")
     c2 = data.find("Week")
@@ -52,6 +69,14 @@ def extract_info(data:str):
     return {"day":p1,"week":p2,"year":p3}
 
 def updater(config):
+    """
+    This is a parent function that endlessly will refresh the targetted page after the desired interval and scrape the page.
+    Inputs:
+        -config(dict): this should contain the following:
+            - contract_address
+            - refresh_time
+     
+    """
     global driver,page,apr
     init()
     data = get_data(config["contract_address"])
@@ -68,6 +93,9 @@ def updater(config):
 
 @app.route("/apr/year",methods=["GET"])
 def get_year():
+    """
+        returns the yearly APR for the desired contract
+    """
     global apr,state
     if state and "year" in apr:
         return jsonify({"year":apr["year"]}),200
@@ -76,6 +104,9 @@ def get_year():
 
 @app.route("/apr/day",methods=["GET"])
 def get_day():
+    """
+        returns the daily APR for the desired contract
+    """
     global apr
     if state and "day" in apr:
         return jsonify({"day":apr["day"]}),200
@@ -84,6 +115,9 @@ def get_day():
 
 @app.route("/apr/week",methods=["GET"])
 def get_week():
+    """
+        returns the weekly APR for the desired contract
+    """
     global apr
     if state and "week" in apr:
         return jsonify({"week":apr["week"]}),200
@@ -92,6 +126,9 @@ def get_week():
 
 @app.route("/",methods=["GET"])
 def index():
+    """
+    returns all apr as dictionary
+    """
     if state:
         return jsonify(apr),200
     else:
